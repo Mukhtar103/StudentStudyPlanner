@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS task_status_history (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  task_id INT UNSIGNED NOT NULL,
+  status ENUM('not_started','in_progress','completed','archived') NOT NULL,
+  occurred_at DATETIME(3) NOT NULL,
+  INDEX (user_id, task_id, occurred_at),
+  FOREIGN KEY (user_id, task_id) REFERENCES tasks(user_id, id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+ALTER TABLE subtasks
+  ADD COLUMN created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  ADD COLUMN updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3);
+
+ALTER TABLE tasks
+  ADD COLUMN target_date DATE,
+  ADD COLUMN archived_at DATETIME(3),
+  ADD COLUMN created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  ADD COLUMN updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  ADD INDEX task_owner_due_at (user_id, due_at);

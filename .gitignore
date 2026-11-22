@@ -10,6 +10,7 @@ coverage/
 
 *.log
 *.sql
+!database/migrations/[0-9]*_*.sql
 *.sqlite
 *.sqlite3
 

@@ -10,7 +10,9 @@ export async function migrate(pool) {
     if (row.acquired !== 1) throw new Error('Migration lock unavailable');
     await db.query('CREATE TABLE IF NOT EXISTS schema_migrations (version VARCHAR(150) PRIMARY KEY, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB');
     const folder = new URL('./migrations/', import.meta.url);
-    for (const name of (await readdir(folder)).filter(name => /^\d+_[a-z_]+\.sql$/.test(name)).sort()) {
+    const names = (await readdir(folder)).filter(name => /^\d+_[a-z_]+\.sql$/.test(name)).sort();
+    if (!names.length) throw new Error('Migration SQL files missing from deployment');
+    for (const name of names) {
       const sql = await readFile(new URL(name, folder), 'utf8');
       const checksum = createHash('sha256').update(sql).digest('hex');
       const [[existing]] = await db.execute('SELECT checksum FROM schema_migrations WHERE version = ?', [name]);
@@ -35,7 +37,9 @@ export async function verifyMigrations(pool) {
   const [rows] = await pool.query('SELECT version, checksum FROM schema_migrations');
   const installed = new Map(rows.map(row => [row.version, row.checksum]));
   const folder = new URL('./migrations/', import.meta.url);
-  for (const name of (await readdir(folder)).filter(name => /^\d+_[a-z_]+\.sql$/.test(name))) {
+  const names = (await readdir(folder)).filter(name => /^\d+_[a-z_]+\.sql$/.test(name));
+  if (!names.length) throw new Error('Migration SQL files missing from deployment');
+  for (const name of names) {
     const checksum = createHash('sha256').update(await readFile(new URL(name, folder), 'utf8')).digest('hex');
     if (installed.get(name) !== checksum) throw new Error('Migration missing or changed: ' + name);
   }
