@@ -28,7 +28,23 @@ export async function migrate(pool) {
         ? sql.replace('ADD COLUMN planned_minutes INT UNSIGNED GENERATED ALWAYS AS (CEIL(TIMESTAMPDIFF(MICROSECOND,start_at,end_at)/60000000)) STORED',
           'ADD COLUMN planned_minutes INT UNSIGNED GENERATED ALWAYS AS (CEIL(TIMESTAMPDIFF(MICROSECOND,start_at,end_at)/60000000)) VIRTUAL')
         : sql;
-      for (const statement of executable.split(/;\s*/).map(part => part.trim()).filter(Boolean)) await db.query(statement);
+      const statements = executable.split(/;\s*/).map(part => part.trim()).filter(Boolean)
+        .flatMap(statement => {
+          // TiDB validates keys against the schema before an ALTER starts.
+          // These migrations must finish adding columns before adding keys.
+          const table = statement.match(/^ALTER TABLE (study_sessions|notifications)\s+/)?.[1];
+          if (!tidb || !['004_study_sessions.sql','005_reminders.sql'].includes(name) || !table) return [statement];
+          const clauses = statement.replace(/^ALTER TABLE \w+\s+/, '')
+            .split(/,\s*(?=(?:ADD (?:UNIQUE|FOREIGN KEY|INDEX)|DROP INDEX)\b)/);
+          return clauses.map(clause => 'ALTER TABLE ' + table + '\n' + clause);
+        });
+      for (const [index, statement] of statements.entries()) {
+        try { await db.query(statement); }
+        catch (error) {
+          console.error(JSON.stringify({event:'migration_statement_failed',migration:name,statement:index + 1,code:error.code}));
+          throw error;
+        }
+      }
       await db.execute('INSERT INTO schema_migrations (version, checksum) VALUES (?, ?)', [name, checksum]);
     }
   } finally {
