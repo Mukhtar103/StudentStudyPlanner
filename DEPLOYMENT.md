@@ -1,5 +1,17 @@
 # Production startup and database recovery
 
+## Render Free with Vercel
+
+Use the repository root, Node runtime, `npm ci && npm run build`, and the Free instance. Render automatically supplies `RENDER=true` and `PORT`; the backend uses these to bind to `0.0.0.0` behind Render's HTTPS proxy. Keep `NODE_ENV=production`, `TRUST_PROXY_HOPS=1`, and all database, TLS, and HTTPS-origin checks enabled. Leave `API_HOST` and `API_PORT` unset. Set the health check path to `/api/v1/health`.
+
+Set `APP_URL` to the Vercel HTTPS origin. Configure `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and `DB_TLS=true` from the remote database connection details in Render's environment settings. Never commit credentials. For TiDB Starter, validate the existing migrations against the new empty database before transferring any existing records; MySQL compatibility alone is not proof of full application compatibility.
+
+The Free plan has no pre-deploy command. For the initial empty database, the explicit start command `npm run db:migrate && npm start` applies the existing checksum-verified migrations before starting. Use it only after confirming the database target. It does not copy local records. Startup will stop on migration errors; retain the error code for diagnosis rather than changing migration SQL or disabling constraints. After initialization, `npm start` is sufficient.
+
+Allow the backend service's outbound addresses in the database network settings. Once the service is live, set Vercel's `PLANNER_BACKEND_ORIGIN` to its HTTPS origin and redeploy. Verify sign-in, account creation, and session restoration through Vercel; a successful health check alone does not verify these workflows.
+
+Render Free sleeps when idle, so the in-process reminder worker cannot deliver on schedule while asleep. No continuously running reminder service or live TiDB compatibility is verified by this configuration patch.
+
 ## Vercel frontend
 
 Set the Vercel Root Directory to the folder containing `package.json`, `vite.config.js` and `vercel.js`. The checked-in config uses the Vite preset, runs `npm run build` and publishes `client/dist`. Set the Production build environment variable `PLANNER_BACKEND_ORIGIN` to the separate Express service's HTTPS origin, without a path. Use a separate test backend for previews if needed.

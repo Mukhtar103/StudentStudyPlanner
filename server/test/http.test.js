@@ -78,6 +78,19 @@ test('production requires HTTPS origins, a local proxy, and database configurati
   assert.throws(()=>readConfig({...env,API_HOST:'0.0.0.0'}),/loopback/);
 });
 
+test('Render uses its managed proxy binding while preserving production checks', async () => {
+  const { readConfig } = await import('../src/config/env.js');
+  const env = {RENDER:'true',PORT:'10000',NODE_ENV:'production',APP_URL:'https://planner.example.test',DB_HOST:'mysql.example.test',DB_NAME:'test',DB_USER:'test',DB_PASSWORD:'test-placeholder',DB_TLS:'true',TRUST_PROXY_HOPS:'1'};
+  assert.equal(readConfig(env).host, '0.0.0.0');
+  assert.equal(readConfig(env).port, 10000);
+  assert.equal(readConfig({...env,API_PORT:'3002'}).port, 3002);
+  assert.throws(()=>readConfig({...env,PORT:'invalid'}), /valid port/);
+  assert.throws(()=>readConfig({...env,TRUST_PROXY_HOPS:'0'}), /HTTPS reverse proxy/);
+  assert.throws(()=>readConfig({...env,DB_TLS:'false'}), /DB_TLS/);
+  assert.throws(()=>readConfig({...env,APP_URL:'http://planner.example.test'}), /HTTPS origins/);
+  assert.throws(()=>readConfig({...env,RENDER:'false',API_HOST:'0.0.0.0'}), /loopback/);
+});
+
 test('production SPA routes refresh and API and asset misses stay 404', async () => {
   const { mkdtemp, mkdir, writeFile, rm } = await import('node:fs/promises');
   const { tmpdir } = await import('node:os');
