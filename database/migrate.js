@@ -8,6 +8,8 @@ export async function migrate(pool) {
   try {
     const [[row]] = await db.query("SELECT GET_LOCK(SHA2(CONCAT(DATABASE(), ':study-planner:migrations'), 256), 30) AS acquired");
     if (row.acquired !== 1) throw new Error('Migration lock unavailable');
+    const [[server]] = await db.query('SELECT VERSION() AS version');
+    const tidb = /tidb/i.test(server.version);
     await db.query('CREATE TABLE IF NOT EXISTS schema_migrations (version VARCHAR(150) PRIMARY KEY, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB');
     const folder = new URL('./migrations/', import.meta.url);
     const names = (await readdir(folder)).filter(name => /^\d+_[a-z_]+\.sql$/.test(name)).sort();
@@ -20,7 +22,13 @@ export async function migrate(pool) {
         if (existing.checksum !== checksum) throw new Error('Applied migration has changed: ' + name);
         continue;
       }
-      for (const statement of sql.split(/;\s*/).map(part => part.trim()).filter(Boolean)) await db.query(statement);
+      // TiDB cannot ADD a STORED generated column. Keep source checksums and
+      // the calculation intact; use its supported virtual storage only there.
+      const executable = tidb && name === '004_study_sessions.sql'
+        ? sql.replace('ADD COLUMN planned_minutes INT UNSIGNED GENERATED ALWAYS AS (CEIL(TIMESTAMPDIFF(MICROSECOND,start_at,end_at)/60000000)) STORED',
+          'ADD COLUMN planned_minutes INT UNSIGNED GENERATED ALWAYS AS (CEIL(TIMESTAMPDIFF(MICROSECOND,start_at,end_at)/60000000)) VIRTUAL')
+        : sql;
+      for (const statement of executable.split(/;\s*/).map(part => part.trim()).filter(Boolean)) await db.query(statement);
       await db.execute('INSERT INTO schema_migrations (version, checksum) VALUES (?, ?)', [name, checksum]);
     }
   } finally {
