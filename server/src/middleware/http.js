@@ -31,7 +31,10 @@ export function handleError(err, req, res, next) {
   if (err.type === 'entity.parse.failed') return sendError(req, res, 400, 'INVALID_JSON', 'Send a valid JSON body.');
   if (err.type === 'entity.too.large') return sendError(req, res, 413, 'BODY_TOO_LARGE', 'The request body exceeds the size limit.');
   if (err.status >= 400 && err.status < 500) return sendError(req, res, err.status, 'INVALID_REQUEST', 'Check the request and try again.');
-  console.error(JSON.stringify({ event: 'http_error', requestId: req.id, name: err.name }));
+  console.error(JSON.stringify({ event: 'http_error', requestId: req.id, name: err.name,
+    code: typeof err.code === 'string' && /^[A-Z0-9_]{1,80}$/.test(err.code) ? err.code : undefined,
+    errno: Number.isInteger(err.errno) ? err.errno : undefined,
+  }));
   sendError(req, res, 500, 'INTERNAL_ERROR', 'An unexpected error occurred.');
 }
 
