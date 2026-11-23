@@ -48,7 +48,7 @@ function invalidToken() {
 
 async function createSession(db, id) {
   const token = newToken();
-  await db.execute('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, TIMESTAMPADD(SECOND, ?, UTC_TIMESTAMP(3)))', [digest(token), id, sessionAge / 1000]);
+  await db.execute('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)', [digest(token), id, new Date(Date.now() + sessionAge)]);
   return { token, user: await profile(db, id) };
 }
 
@@ -101,7 +101,7 @@ export function makeAuth(pool, sendReset) {
       await transaction(pool, async db => {
         await one(db, 'SELECT id FROM users WHERE id = ? FOR UPDATE', [user.id]);
         await db.execute('DELETE FROM password_reset_tokens WHERE user_id = ? AND expires_at <= UTC_TIMESTAMP(3)', [user.id]);
-        await db.execute('INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES (?, ?, TIMESTAMPADD(SECOND, ?, UTC_TIMESTAMP(3)))', [digest(token), user.id, resetAge / 1000]);
+        await db.execute('INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES (?, ?, ?)', [digest(token), user.id, new Date(Date.now() + resetAge)]);
         await audit(db, user.id, 'password_reset_requested');
       });
       void sendReset(email, token).catch(async () => {
