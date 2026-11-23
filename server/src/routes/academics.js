@@ -93,7 +93,7 @@ async function list(db, spec, owner, query, courseId) {
   }
   const from = ' FROM ' + source(spec) + ' WHERE ' + filters.join(' AND ');
   const [{ total }] = await db.execute('SELECT COUNT(*) AS total' + from, values).then(([rows]) => rows);
-  const [items] = await db.execute('SELECT ' + spec.select + from + ' ORDER BY ' + spec.order + ' LIMIT ? OFFSET ?', [...values, limit, (page - 1) * limit]);
+  const [items] = await db.query('SELECT ' + spec.select + from + ' ORDER BY ' + spec.order + ' LIMIT ? OFFSET ?', [...values, limit, (page - 1) * limit]);
   return { items, page, limit, total };
 }
 async function save(db, spec, owner, id, body, courseId) {

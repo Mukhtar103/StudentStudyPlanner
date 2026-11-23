@@ -122,7 +122,7 @@ async function list(db, ctx, query) {
   const orders = { recent: 't.created_at DESC,t.id DESC', due: 'COALESCE(t.due_date,DATE(t.due_at)) IS NULL,COALESCE(t.due_date,DATE(t.due_at)),t.due_at,t.id', title: 't.title,t.id' };
   const clause = ' WHERE ' + where.join(' AND ');
   const { total } = await one(db, 'SELECT COUNT(*) AS total FROM tasks t' + clause, args);
-  const [items] = await db.execute('SELECT ' + selection + source + clause + ' ORDER BY ' + orders[sort] + ' LIMIT ? OFFSET ?', [now, today, ...args, limit, (page - 1) * limit]);
+  const [items] = await db.query('SELECT ' + selection + source + clause + ' ORDER BY ' + orders[sort] + ' LIMIT ? OFFSET ?', [now, today, ...args, limit, (page - 1) * limit]);
   const summary = await one(db, `SELECT COUNT(*) AS total, COUNT(CASE WHEN ${pending} THEN 1 END) AS pending,
     COUNT(CASE WHEN t.status='completed' THEN 1 END) AS completed, COUNT(CASE WHEN ${pending} AND ${late} THEN 1 END) AS overdue
     FROM tasks t WHERE t.user_id=? AND t.status<>'archived'`, [now, today, owner]);
@@ -170,7 +170,7 @@ async function save(db, ctx, id, body, archive = false) {
 async function getSubtasks(db, owner, id, query) {
   const { page, limit } = pagination(query);
   const { total } = await one(db, 'SELECT COUNT(*) AS total FROM subtasks WHERE user_id=? AND task_id=?', [owner, id]);
-  const [items] = await db.execute('SELECT ' + subFields + ' FROM subtasks WHERE user_id=? AND task_id=? ORDER BY position,id LIMIT ? OFFSET ?', [owner, id, limit, (page - 1) * limit]);
+  const [items] = await db.query('SELECT ' + subFields + ' FROM subtasks WHERE user_id=? AND task_id=? ORDER BY position,id LIMIT ? OFFSET ?', [owner, id, limit, (page - 1) * limit]);
   return { items, total, limit, page };
 }
 export function mountTasks(router, { pool, requireUser, respond }) {

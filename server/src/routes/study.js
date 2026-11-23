@@ -63,7 +63,7 @@ async function list(db, user, query) {
   if (query.to !== undefined) { where.push('s.start_at<?'); args.push(dayBoundary(nextDate(date(query.to)), user.timezone)); }
   const clause = ' WHERE ' + where.join(' AND ');
   const { total } = await one(db, 'SELECT COUNT(*) AS total FROM study_sessions s' + clause, args);
-  const [items] = await db.execute('SELECT ' + selected + source + clause + ' ORDER BY s.start_at,s.id LIMIT ? OFFSET ?', [...args, limit, (page - 1) * limit]);
+  const [items] = await db.query('SELECT ' + selected + source + clause + ' ORDER BY s.start_at,s.id LIMIT ? OFFSET ?', [...args, limit, (page - 1) * limit]);
   const now = new Date();
   const today = localStamp(now, user.timezone).slice(0, 10);
   const summary = await one(db, `SELECT COUNT(CASE WHEN status IN ('planned','in_progress') AND start_at>=? AND start_at<? THEN 1 END) AS today,
@@ -221,7 +221,7 @@ export function mountStudy(router, { pool, requireUser, respond }) {
   router.get('/availability',requireUser,async (req,res) => {
     const { page,limit } = paging(req.query);
     const { total } = await one(pool,'SELECT COUNT(*) AS total FROM availability_rules WHERE user_id=?',[req.user.id]);
-    const [items] = await pool.execute('SELECT ' + availability + ' FROM availability_rules WHERE user_id=? ORDER BY weekday,start_time,id LIMIT ? OFFSET ?',[req.user.id,limit,(page-1)*limit]);
+    const [items] = await pool.query('SELECT ' + availability + ' FROM availability_rules WHERE user_id=? ORDER BY weekday,start_time,id LIMIT ? OFFSET ?',[req.user.id,limit,(page-1)*limit]);
     return respond(req,res,{ items,total,page,limit });
   });
   for (const method of ['post','patch','delete']) {

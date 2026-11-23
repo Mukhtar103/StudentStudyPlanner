@@ -27,7 +27,7 @@ export function mountNotifications(router,{pool,requireUser,respond}) {
       where+=' AND channel=?';args.push(req.query.channel);
     }
     const {total}=await one(pool,'SELECT COUNT(*) AS total FROM reminder_rules WHERE '+where,args);
-    const [items]=await pool.execute('SELECT '+fields+',COALESCE((SELECT title FROM tasks t WHERE t.user_id=r.user_id AND t.id=r.task_id),(SELECT title FROM study_sessions s WHERE s.user_id=r.user_id AND s.id=r.session_id)) AS title FROM reminder_rules r WHERE '+where+' ORDER BY id DESC LIMIT ? OFFSET ?',[...args,limit,(page-1)*limit]);
+    const [items]=await pool.query('SELECT '+fields+',COALESCE((SELECT title FROM tasks t WHERE t.user_id=r.user_id AND t.id=r.task_id),(SELECT title FROM study_sessions s WHERE s.user_id=r.user_id AND s.id=r.session_id)) AS title FROM reminder_rules r WHERE '+where+' ORDER BY id DESC LIMIT ? OFFSET ?',[...args,limit,(page-1)*limit]);
     return respond(req,res,{items,total,page,limit});
   });
   for(const method of ['post','patch','delete']) {
@@ -81,7 +81,7 @@ export function mountNotifications(router,{pool,requireUser,respond}) {
     if(read!==undefined && !['read','unread'].includes(read)) throw invalid();
     const where=inbox+(read==='unread'?' AND read_at IS NULL':read==='read'?' AND read_at IS NOT NULL':'');
     const {total}=await one(pool,'SELECT COUNT(*) AS total FROM notifications WHERE '+where,[req.user.id]);
-    const [items]=await pool.execute('SELECT id,title,message,source_id AS sourceId,source_type AS sourceType,scheduled_at AS scheduledAt,delivered_at AS deliveredAt,read_at AS readAt FROM notifications WHERE '+where+' ORDER BY delivered_at DESC,id DESC LIMIT ? OFFSET ?',[req.user.id,limit,(page-1)*limit]);
+    const [items]=await pool.query('SELECT id,title,message,source_id AS sourceId,source_type AS sourceType,scheduled_at AS scheduledAt,delivered_at AS deliveredAt,read_at AS readAt FROM notifications WHERE '+where+' ORDER BY delivered_at DESC,id DESC LIMIT ? OFFSET ?',[req.user.id,limit,(page-1)*limit]);
     return respond(req,res,{items,total,page,limit});
   });
   router.get('/notifications/unread-count',requireUser,async(req,res)=>respond(req,res,await one(pool,'SELECT COUNT(*) AS count FROM notifications WHERE '+inbox+' AND read_at IS NULL',[req.user.id])));
