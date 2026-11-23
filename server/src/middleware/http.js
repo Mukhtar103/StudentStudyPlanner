@@ -34,6 +34,8 @@ export function handleError(err, req, res, next) {
   console.error(JSON.stringify({ event: 'http_error', requestId: req.id, name: err.name,
     code: typeof err.code === 'string' && /^[A-Z0-9_]{1,80}$/.test(err.code) ? err.code : undefined,
     errno: Number.isInteger(err.errno) ? err.errno : undefined,
+    column: err.code === 'ER_DATA_TOO_LONG'
+      ? /Data too long for column ['`]([a-zA-Z0-9_]+)['`]/i.exec(err.sqlMessage || '')?.[1] : undefined,
   }));
   sendError(req, res, 500, 'INTERNAL_ERROR', 'An unexpected error occurred.');
 }
