@@ -30,8 +30,8 @@ export function emailValue(value) {
 }
 
 export function passwordValue(value, isNew = true) {
-  if (typeof value !== 'string' || Buffer.byteLength(value) > 72 || [...value].length < (isNew ? 8 : 1)) {
-    throw new ApiError(400, 'VALIDATION_ERROR', isNew ? 'Use at least 8 characters and at most 72 UTF-8 bytes.' : 'Enter your password.');
+  if (typeof value !== 'string' || Buffer.byteLength(value) > 72 || (isNew ? [...value].length !== 8 : [...value].length < 1)) {
+    throw new ApiError(400, 'VALIDATION_ERROR', isNew ? 'Use exactly 8 characters.' : 'Enter your password.');
   }
   return value;
 }
