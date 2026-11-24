@@ -1,3 +1,5 @@
+import { t, useLanguage } from '../services/language';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useEffect, useState } from 'react';
 import { Bell, Download, ShieldCheck, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -7,6 +9,7 @@ import { api } from '../services/api';
 import { initials, useSession } from '../services/session';
 
 function AccountForm({ title, icon: Icon, description, label, onSave, children }) {
+  useLanguage();
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
@@ -27,46 +30,49 @@ function AccountForm({ title, icon: Icon, description, label, onSave, children }
   }
 
   return <Card className="account-card">
-    <div className="account-card-head"><span className="tile"><Icon size={20} /></span><div><h2>{title}</h2><p>{description}</p></div></div>
+    <div className="account-card-head"><span className="tile"><Icon size={20} /></span><div><h2>{t(title)}</h2><p>{t(description)}</p></div></div>
     <form className="account-form" onSubmit={submit} onChange={() => setFeedback(null)} aria-busy={pending}>
-      <fieldset disabled={pending}>{children}</fieldset>
-      {feedback && <Alert error={feedback.error}>{feedback.message}</Alert>}
-      <Button type="submit" disabled={pending}>{pending ? 'Saving…' : label}</Button>
+      <fieldset disabled={pending}>{t(children)}</fieldset>
+      {feedback && <Alert error={feedback.error}>{t(feedback.message)}</Alert>}
+      <Button type="submit" disabled={pending}>{pending ? t('Saving…') : t(label)}</Button>
     </form>
   </Card>;
 }
 
 export function Profile() {
+  useLanguage();
   return <>
-    <PageHeader title="Profile" description="Manage your identity and regional settings.">
-      <Button variant="secondary" to="/settings">Account settings</Button>
+    <PageHeader title={t("Profile")} description={t("Manage your identity and regional settings.")}>
+      <Button variant="secondary" to="/settings">{t("Account settings")}</Button>
     </PageHeader>
     <ProfileFields />
   </>;
 }
 
 function ProfileFields() {
+  useLanguage();
   const { user, setUser } = useSession();
   const timezones = Intl.supportedValuesOf('timeZone');
   return <>
     <div id="profile-settings" className="account-stack">
-      <div className="identity-strip"><span className="avatar">{initials(user.displayName)}</span><div><strong>{user.displayName}</strong><p>{user.email}</p></div></div>
-      <AccountForm title="Personal information" icon={UserRound} description="Choose how your name, dates, and times appear." label="Save profile"
+      <div className="identity-strip"><span className="avatar">{t(initials(user.displayName))}</span><div><strong>{user.displayName}</strong><p>{user.email}</p></div></div>
+      <AccountForm title={t("Personal information")} icon={UserRound} description={t("Choose how your name, dates, and times appear.")} label={t("Save profile")}
         onSave={async data => {
           setUser(await api('/me', { method: 'PATCH', data }));
           return 'Profile saved.';
         }}>
-        <Input name="displayName" label="Display name" defaultValue={user.displayName} required maxLength={100} autoComplete="name" />
-        <Input name="emailDisplay" label="Email address" value={user.email} type="email" readOnly disabled />
-        <Input name="timezone" label="Time zone" list="timezone-options" defaultValue={user.timezone} maxLength={80} required />
-        <datalist id="timezone-options">{['UTC', ...timezones].map(zone => <option key={zone} value={zone} />)}</datalist>
-        <Input name="locale" label="Locale" defaultValue={user.locale} maxLength={40} placeholder="en-US" required />
+        <Input name="displayName" label={t("Display name")} defaultValue={user.displayName} required maxLength={100} autoComplete="name" />
+        <Input name="emailDisplay" label={t("Email address")} value={user.email} type="email" readOnly disabled />
+        <Input name="timezone" label={t("Time zone")} list="timezone-options" defaultValue={user.timezone} maxLength={80} required />
+        <datalist id="timezone-options">{t(['UTC', ...timezones].map(zone => <option key={zone} value={zone} />))}</datalist>
+        <div className="field"><span>{t('Interface language')}</span><LanguageSwitcher /></div>
       </AccountForm>
     </div>
   </>;
 }
 
 export function Settings() {
+  useLanguage();
   const { user } = useSession();
   const [state, setState] = useState({ loading: true });
   const [attempt, setAttempt] = useState(0);
@@ -84,22 +90,22 @@ export function Settings() {
   const preferences = state.data;
 
   return <>
-    <PageHeader title="Account settings" description="Manage account security and how reminders reach you.">
-      <Button variant="secondary" to="/profile">Edit profile</Button>
+    <PageHeader title={t("Account settings")} description={t("Manage account security and how reminders reach you.")}>
+      <Button variant="secondary" to="/profile">{t("Edit profile")}</Button>
     </PageHeader>
-    <nav className="academic-tabs" aria-label="Settings sections">
-      <a href="#profile-settings">Profile &amp; region</a><a href="#notification-settings">Notifications</a><a href="#security-settings">Security</a><a href="#personal-export">Data &amp; privacy</a>
+    <nav className="academic-tabs" aria-label={t("Settings sections")}>
+      <a href="#profile-settings">{t("Profile & region")}</a><a href="#notification-settings">{t("Notifications")}</a><a href="#security-settings">{t("Security")}</a><a href="#personal-export">{t("Data & privacy")}</a>
     </nav>
     <div className="account-stack">
       <ProfileFields />
       <div id="notification-settings" />
-      {state.loading && <Card><LoadingState label="Loading preferences" /></Card>}
-      {state.error && <Card><Alert error>Couldn’t load your notification preferences.</Alert><Button className="retry-session" onClick={() => {
+      {state.loading && <Card><LoadingState label={t("Loading preferences")} /></Card>}
+      {state.error && <Card><Alert error>{t("Couldn’t load your notification preferences.")}</Alert><Button className="retry-session" onClick={() => {
         setState({ loading: true });
         setAttempt(value => value + 1);
-      }}>Retry</Button></Card>}
-      {preferences && <AccountForm title="Notification preferences" icon={Bell} description={'Quiet hours use ' + user.timezone + '. Leave both times empty to disable them.'}
-        label="Save preferences" onSave={async data => {
+      }}>{t("Retry")}</Button></Card>}
+      {preferences && <AccountForm title={t("Notification preferences")} icon={Bell} description={t('Quiet hours use ') + t(user.timezone) + t('. Leave both times empty to disable them.')}
+        label={t("Save preferences")} onSave={async data => {
           await api('/preferences', { method: 'PATCH', data: {
             reminderMinutes: Number(data.reminderMinutes),
             emailNotifications: data.emailNotifications === 'on',
@@ -109,35 +115,36 @@ export function Settings() {
           } });
           return 'Preferences saved.';
         }}>
-        <Input name="reminderMinutes" type="number" label="Default reminder lead time (minutes)" defaultValue={preferences.reminderMinutes} min={0} max={10080} required />
+        <Input name="reminderMinutes" type="number" label={t("Default reminder lead time (minutes)")} defaultValue={preferences.reminderMinutes} min={0} max={10080} required />
         <div className="check-list">
-          <label><input name="emailNotifications" type="checkbox" defaultChecked={preferences.emailNotifications} /> Email notifications</label>
-          <label><input name="inAppNotifications" type="checkbox" defaultChecked={preferences.inAppNotifications} /> In-app notifications</label>
+          <label><input name="emailNotifications" type="checkbox" defaultChecked={preferences.emailNotifications} />{t(" Email notifications")}</label>
+          <label><input name="inAppNotifications" type="checkbox" defaultChecked={preferences.inAppNotifications} />{t(" In-app notifications")}</label>
         </div>
-        <Input name="quietStart" type="time" label="Quiet hours start" defaultValue={preferences.quietStart ?? ''} />
-        <Input name="quietEnd" type="time" label="Quiet hours end" defaultValue={preferences.quietEnd ?? ''} />
+        <Input name="quietStart" type="time" label={t("Quiet hours start")} defaultValue={preferences.quietStart ?? ''} />
+        <Input name="quietEnd" type="time" label={t("Quiet hours end")} defaultValue={preferences.quietEnd ?? ''} />
       </AccountForm>}
       <div id="security-settings" />
-      <AccountForm title="Change password" icon={ShieldCheck} description="Changing your password signs out all active sessions." label="Change password"
+      <AccountForm title={t("Change password")} icon={ShieldCheck} description={t("Changing your password signs out all active sessions.")} label={t("Change password")}
         onSave={async ({ currentPassword, password, confirm }) => {
           if (!validPassword(password)) throw new Error(passwordHint);
           if (password !== confirm) throw new Error('Passwords must match.');
           await api('/auth/password/change', { method: 'POST', data: { currentPassword, password } });
           window.location.replace('/login?password=changed');
         }}>
-        <PasswordInput name="currentPassword" label="Current password" autoComplete="current-password" />
-        <PasswordInput name="password" label="New password" aria-describedby="change-password-hint" />
-        <small id="change-password-hint" className="full-width">{passwordHint}</small>
-        <PasswordInput name="confirm" label="Confirm new password" />
+        <PasswordInput name="currentPassword" label={t("Current password")} autoComplete="current-password" />
+        <PasswordInput name="password" label={t("New password")} aria-describedby="change-password-hint" />
+        <small id="change-password-hint" className="full-width">{t(passwordHint)}</small>
+        <PasswordInput name="confirm" label={t("Confirm new password")} />
       </AccountForm>
       <PersonalExport />
-      <Link to="/dashboard">Back to dashboard</Link>
+      <Link to="/dashboard">{t("Back to dashboard")}</Link>
     </div>
   </>;
 }
 
 
 function PersonalExport() {
+  useLanguage();
   const [busy,setBusy]=useState(null);
   const [feedback,setFeedback]=useState(null);
   async function download(format) {
@@ -166,14 +173,14 @@ function PersonalExport() {
     }
   }
   return <div id="personal-export"><Card className="account-card">
-    <div className="account-card-head"><span className="tile"><Download size={20}/></span><div><h2>Data &amp; privacy</h2><p>Download a copy of your personal planner data.</p></div></div>
-    <p className="export-copy">Includes your profile, preferences, academic records, tasks, study sessions, availability, reminders, and notification history. Keep the downloaded file private.</p>
-    <p className="export-copy"><Link to="/privacy">Privacy notice</Link></p>
-    <p className="export-copy"><strong>JSON</strong> preserves the record structure. <strong>CSV</strong> lists each record’s fields in a spreadsheet-friendly format.</p>
-    <div className="editor-actions">{['json','csv'].map(format=><Button key={format} disabled={Boolean(busy)} variant={format==='json'?'primary':'secondary'} onClick={()=>download(format)}>
-      <Download size={17}/> {busy===format?'Preparing…':'Export '+format.toUpperCase()}
-    </Button>)}</div>
-    {feedback&&<div className="export-feedback"><Alert error={feedback.error}>{feedback.message}</Alert></div>}
+    <div className="account-card-head"><span className="tile"><Download size={20}/></span><div><h2>{t("Data & privacy")}</h2><p>{t("Download a copy of your personal planner data.")}</p></div></div>
+    <p className="export-copy">{t("Includes your profile, preferences, academic records, tasks, study sessions, availability, reminders, and notification history. Keep the downloaded file private.")}</p>
+    <p className="export-copy"><Link to="/privacy">{t("Privacy notice")}</Link></p>
+    <p className="export-copy"><strong>{t("JSON")}</strong>{t(" preserves the record structure. ")}<strong>{t("CSV")}</strong>{t(" lists each record’s fields in a spreadsheet-friendly format.")}</p>
+    <div className="editor-actions">{t(['json','csv'].map(format=><Button key={format} disabled={Boolean(busy)} variant={format==='json'?'primary':'secondary'} onClick={()=>download(format)}>
+      <Download size={17}/> {busy===format?t('Preparing…'):t('Export ')+t(format.toUpperCase())}
+    </Button>))}</div>
+    {feedback&&<div className="export-feedback"><Alert error={feedback.error}>{t(feedback.message)}</Alert></div>}
   </Card></div>;
 }
 

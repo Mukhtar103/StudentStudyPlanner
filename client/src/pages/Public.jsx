@@ -1,3 +1,5 @@
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { t, useLanguage } from '../services/language';
 import { api } from '../services/api';
 import { useSession } from '../services/session';
 import PasswordInput, { passwordHint, validPassword } from '../components/PasswordInput';
@@ -8,21 +10,22 @@ import { Alert, Button, Card, Input, PageHeader } from '../components/ui';
 import { Brand } from '../layouts/AppLayout';
 
 export function Landing() {
+  useLanguage();
   return <div className="public landing">
-    <header className="public-nav"><Brand /><Button to="/login" variant="secondary">Sign in <ArrowRight size={16} /></Button></header>
+    <header className="public-nav"><Brand /><LanguageSwitcher /><Button to="/login" variant="secondary">{t("Sign in ")}<ArrowRight size={16} /></Button></header>
     <main className="hero">
       <div className="hero-copy">
-        <h1>Make time for <span>better study.</span></h1>
-        <p>Bring your courses, deadlines, and study sessions into one planner. See what’s due and decide what to work on next.</p>
-        <div className="hero-actions"><Button to="/register">Get started <ArrowRight size={18} /></Button><Button to="/preview" variant="secondary">Explore preview</Button></div>
+        <h1>{t("Make time for ")}<span>{t("better study.")}</span></h1>
+        <p>{t("Bring your courses, deadlines, and study sessions into one planner. See what’s due and decide what to work on next.")}</p>
+        <div className="hero-actions"><Button to="/register">{t("Get started ")}<ArrowRight size={18} /></Button><Button to="/preview" variant="secondary">{t("Explore preview")}</Button></div>
       </div>
-      <section className="hero-visual" aria-label="Sample day in Study Planner">
+      <section className="hero-visual" aria-label={t("Sample day in Study Planner")}>
         <div className="orbit orbit-one" /><div className="orbit orbit-two" />
         <div className="sample">
-          <div className="sample-head"><span className="tile"><CalendarDays size={21} /></span><div><strong>Today’s plan</strong><small>Sample schedule</small></div></div>
-          <div className="sample-row"><span className="tile violet"><BookOpen size={17} /></span><div><strong>Calculus review</strong><small>Study session · 45 min</small></div><time>14:00</time></div>
-          <div className="sample-row"><span className="tile amber"><Clock3 size={17} /></span><div><strong>Research outline</strong><small>Assignment deadline</small></div><time>16:00</time></div>
-          <div className="sample-row"><span className="tile green"><Check size={17} /></span><div><strong>Design readings</strong><small>Reading · Complete</small></div></div>
+          <div className="sample-head"><span className="tile"><CalendarDays size={21} /></span><div><strong>{t("Today’s plan")}</strong><small>{t("Sample schedule")}</small></div></div>
+          <div className="sample-row"><span className="tile violet"><BookOpen size={17} /></span><div><strong>{t("Calculus review")}</strong><small>{t("Study session · 45 min")}</small></div><time>14:00</time></div>
+          <div className="sample-row"><span className="tile amber"><Clock3 size={17} /></span><div><strong>{t("Research outline")}</strong><small>{t("Assignment deadline")}</small></div><time>16:00</time></div>
+          <div className="sample-row"><span className="tile green"><Check size={17} /></span><div><strong>{t("Design readings")}</strong><small>{t("Reading · Complete")}</small></div></div>
         </div>
       </section>
     </main>
@@ -49,6 +52,7 @@ function validate(values, mode) {
 }
 
 export function Auth({ mode }) {
+  useLanguage();
   const { title, description, button, endpoint } = modes[mode];
   const [errors, setErrors] = useState({});
   const [feedback, setFeedback] = useState(null);
@@ -100,25 +104,25 @@ export function Auth({ mode }) {
   }
 
   return <div className="public auth">
-    <header className="public-nav"><Brand /><Button to="/preview" variant="secondary">Explore preview <ArrowRight size={16} /></Button></header>
+    <header className="public-nav"><Brand /><LanguageSwitcher /><Button to="/preview" variant="secondary">{t("Explore preview ")}<ArrowRight size={16} /></Button></header>
     <main className="auth-shell">
-      <div className="auth-panel"><span className="tile"><GraduationCap size={23} /></span><h1>{title}</h1><p>{description}</p>
-        {notice && !feedback && <Alert>{notice}</Alert>}
-        {feedback && <Alert error={feedback.error}>{feedback.message}</Alert>}
-        {invalidToken ? <><Alert error>This reset link is invalid, expired, or already used.</Alert><Button className="retry-session" variant="secondary" to="/forgot-password">Request a new link</Button></> :
+      <div className="auth-panel"><span className="tile"><GraduationCap size={23} /></span><h1>{t(title)}</h1><p>{t(description)}</p>
+        {notice && !feedback && <Alert>{t(notice)}</Alert>}
+        {feedback && <Alert error={feedback.error}>{t(feedback.message)}</Alert>}
+        {invalidToken ? <><Alert error>{t("This reset link is invalid, expired, or already used.")}</Alert><Button className="retry-session" variant="secondary" to="/forgot-password">{t("Request a new link")}</Button></> :
           <form noValidate onSubmit={submit} aria-busy={pending} onChange={event => {
             setFeedback(null);
             if (errors[event.target.name]) setErrors({ ...errors, [event.target.name]: undefined });
           }}>
-            {mode === 'register' && <Input required name="displayName" label="Display name" autoComplete="name" maxLength={100} error={errors.displayName} />}
-            {mode !== 'reset' && <Input required name="email" label="Email address" type="email" autoComplete={mode === 'forgot' ? 'email' : 'username'} maxLength={254} error={errors.email} />}
-            {mode !== 'forgot' && <PasswordInput name="password" label={mode === 'reset' ? 'New password' : 'Password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} error={errors.password} aria-describedby={needsConfirmation ? 'password-hint' : undefined} />}
-            {needsConfirmation && <><small id="password-hint">{passwordHint}</small><PasswordInput name="confirm" label="Confirm password" error={errors.confirm} /></>}
-            {mode === 'login' && <Link className="forgot" to="/forgot-password">Forgot password?</Link>}
-            <Button type="submit" disabled={pending}>{pending ? 'Please wait…' : button} <ArrowRight size={17} /></Button>
+            {mode === 'register' && <Input required name="displayName" label={t("Display name")} autoComplete="name" maxLength={100} error={errors.displayName} />}
+            {mode !== 'reset' && <Input required name="email" label={t("Email address")} type="email" autoComplete={mode === 'forgot' ? 'email' : 'username'} maxLength={254} error={errors.email} />}
+            {mode !== 'forgot' && <PasswordInput name="password" label={mode === 'reset' ? t('New password') : t('Password')} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} error={errors.password} aria-describedby={needsConfirmation ? 'password-hint' : undefined} />}
+            {needsConfirmation && <><small id="password-hint">{t(passwordHint)}</small><PasswordInput name="confirm" label={t("Confirm password")} error={errors.confirm} /></>}
+            {mode === 'login' && <Link className="forgot" to="/forgot-password">{t("Forgot password?")}</Link>}
+            <Button type="submit" disabled={pending}>{pending ? t('Please wait…') : t(button)} <ArrowRight size={17} /></Button>
           </form>}
-        <p className="auth-footer"><Link to="/privacy">Privacy notice</Link></p>
-        <p className="auth-footer">{mode === 'login' ? <>New to Study Planner? <Link to="/register">Create an account</Link></> : <Link to="/login">Back to sign in</Link>}</p>
+        <p className="auth-footer"><Link to="/privacy">{t("Privacy notice")}</Link></p>
+        <p className="auth-footer">{mode === 'login' ? <>{t("New to Study Planner? ")}<Link to="/register">{t("Create an account")}</Link></> : <Link to="/login">{t("Back to sign in")}</Link>}</p>
       </div>
     </main>
   </div>;
@@ -126,16 +130,17 @@ export function Auth({ mode }) {
 
 
 export function Privacy() {
+  useLanguage();
   return <div className="public">
-    <header className="public-nav"><Brand /><Button to="/login" variant="secondary">Sign in</Button></header>
+    <header className="public-nav"><Brand /><LanguageSwitcher /><Button to="/login" variant="secondary">{t("Sign in")}</Button></header>
     <main className="workspace-main">
       <div className="account-stack">
-        <PageHeader title="Privacy notice" description="How Study Planner uses your account and planner data." />
+        <PageHeader title={t("Privacy notice")} description={t("How Study Planner uses your account and planner data.")} />
         <Card className="academic-detail">
-          <h2>Account data</h2><p>Your email and display name identify your account. Your locale and time zone determine how dates and times appear. Account security data supports sign-in and recovery.</p>
-          <h2>Planner data</h2><p>Terms, classes, tasks, study sessions, and availability power your schedule and progress. Notification settings control reminder delivery. Email delivery uses the address on your account.</p>
-          <h2>Your data</h2><p>Your planner belongs to your account. You can download your planner and preferences in JSON or CSV from account settings.</p>
-          <Button to="/settings" variant="secondary">Open account settings</Button>
+          <h2>{t("Account data")}</h2><p>{t("Your email and display name identify your account. Your locale and time zone determine how dates and times appear. Account security data supports sign-in and recovery.")}</p>
+          <h2>{t("Planner data")}</h2><p>{t("Terms, classes, tasks, study sessions, and availability power your schedule and progress. Notification settings control reminder delivery. Email delivery uses the address on your account.")}</p>
+          <h2>{t("Your data")}</h2><p>{t("Your planner belongs to your account. You can download your planner and preferences in JSON or CSV from account settings.")}</p>
+          <Button to="/settings" variant="secondary">{t("Open account settings")}</Button>
         </Card>
       </div>
     </main>

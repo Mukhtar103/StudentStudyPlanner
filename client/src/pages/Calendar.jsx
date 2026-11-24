@@ -1,3 +1,4 @@
+import { t, useLanguage } from '../services/language';
 import { useEffect,useRef,useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -36,18 +37,20 @@ export function useOverview(path,revision) {
   return state.key===key ? state : {};
 }
 export function OverviewSkeleton() {
-  return <div className="overview-skeleton" role="status" aria-label="Loading planner"><Card/><Card/><Card/></div>;
+  useLanguage();
+  return <div className="overview-skeleton" role="status" aria-label={t("Loading planner")}><Card/><Card/><Card/></div>;
 }
 function EventDetails({event,user,close}) {
+  useLanguage();
   const dialog=useRef(null);
   useEffect(()=>{dialog.current.showModal();},[]);
   return <dialog ref={dialog} className="academic-dialog" aria-labelledby="event-title" onCancel={e=>{e.preventDefault();close();}}>
-    <small>{eventNames[event.type]}</small><h2 id="event-title">{event.title}</h2>
-    <p>{event.date ? displayDate(event.date,user)+' · All day' : displayTime(event.startAt,user,true)+(event.endAt ? ' – '+displayTime(event.endAt,user,true) : '')}</p>
+    <small>{t(eventNames[event.type])}</small><h2 id="event-title">{event.title}</h2>
+    <p>{event.date ? t(displayDate(event.date,user))+t(' · All day') : t(displayTime(event.startAt,user,true))+(event.endAt ? t(' – ')+t(displayTime(event.endAt,user,true)) : t(''))}</p>
     {event.courseTitle && event.courseTitle!==event.title && <p>{event.courseTitle}</p>}
     {event.location && <p>{event.location}</p>}
-    <p>Status · {event.status.replaceAll('_',' ')}</p>
-    <div className="editor-actions calendar-dialog-actions"><Button variant="secondary" onClick={close}>Close</Button><Button to={eventLink(event)}>Open source record</Button></div>
+    <p>{t("Status · ")}{t(event.status.replaceAll('_',' '))}</p>
+    <div className="editor-actions calendar-dialog-actions"><Button variant="secondary" onClick={close}>{t("Close")}</Button><Button to={eventLink(event)}>{t("Open source record")}</Button></div>
   </dialog>;
 }
 function group(events,date,user) {
@@ -59,8 +62,9 @@ function group(events,date,user) {
   });
 }
 function EventButton({event,user,select,style}) {
+  useLanguage();
   return <button type="button" className="calendar-event" style={{'--event-color':event.color,...style}} onClick={()=>select(event)}>
-    <strong>{event.title}</strong><small>{event.date ? eventNames[event.type] : displayTime(event.startAt,user)}</small>
+    <strong>{event.title}</strong><small>{event.date ? t(eventNames[event.type]) : t(displayTime(event.startAt,user))}</small>
   </button>;
 }
 function timedLayout(events,date,user) {
@@ -96,6 +100,7 @@ function timedLayout(events,date,user) {
   return result;
 }
 export default function Calendar() {
+  useLanguage();
   const {user}=useSession();
   const [params,setParams]=useSearchParams();
   const [revision,setRevision]=useState(0);
@@ -114,51 +119,51 @@ export default function Calendar() {
   const heading=view==='month' ? displayDate(date,user,{month:'long',year:'numeric'}) :
     displayDate(first,user)+(view==='week' ? ' – '+displayDate(last,user) : '');
   return <>
-    <PageHeader title="Calendar" description={'Classes, deadlines, and study sessions in '+user.timezone+'.'} />
+    <PageHeader title={t("Calendar")} description={t('Classes, deadlines, and study sessions in ')+t(user.timezone)+t('.')} />
     <Card className="calendar-toolbar">
       <div className="editor-actions">
-        <Button variant="secondary" aria-label={'Previous '+view} onClick={()=>move(-1)}><ChevronLeft size={17}/></Button>
-        <Button variant="secondary" aria-label={'Next '+view} onClick={()=>move(1)}><ChevronRight size={17}/></Button>
-        <Button variant="secondary" onClick={()=>go(today)}>Today</Button><h2 aria-live="polite">{heading}</h2>
+        <Button variant="secondary" aria-label={t('Previous ')+t(view)} onClick={()=>move(-1)}><ChevronLeft size={17}/></Button>
+        <Button variant="secondary" aria-label={t('Next ')+t(view)} onClick={()=>move(1)}><ChevronRight size={17}/></Button>
+        <Button variant="secondary" onClick={()=>go(today)}>{t("Today")}</Button><h2 aria-live="polite">{t(heading)}</h2>
       </div>
       <div className="editor-actions">
-        {['day','week','month'].map(mode=><Button key={mode} aria-pressed={view===mode} variant={view===mode ? 'primary':'secondary'} onClick={()=>go(date,mode)}>{mode[0].toUpperCase()+mode.slice(1)}</Button>)}
-        <div className="field"><label className="sr-only" htmlFor="event-filter">Event type</label><select id="event-filter" value={type} onChange={e=>go(date,view,e.target.value)}>
-          <option value="">All events</option>{Object.entries(eventNames).map(([key,label])=><option key={key} value={key}>{label}</option>)}
+        {t(['day','week','month'].map(mode=><Button key={mode} aria-pressed={view===mode} variant={view===mode ? 'primary':'secondary'} onClick={()=>go(date,mode)}>{t(mode[0].toUpperCase()+mode.slice(1))}</Button>))}
+        <div className="field"><label className="sr-only" htmlFor="event-filter">{t("Event type")}</label><select id="event-filter" value={type} onChange={e=>go(date,view,e.target.value)}>
+          <option value="">{t("All events")}</option>{t(Object.entries(eventNames).map(([key,label])=><option key={key} value={key}>{t(label)}</option>))}
         </select></div>
       </div>
     </Card>
-    {error && <Card><Alert error>{error}</Alert><Button className="retry-session" onClick={()=>setRevision(n=>n+1)}>Retry</Button></Card>}
+    {error && <Card><Alert error>{t(error)}</Alert><Button className="retry-session" onClick={()=>setRevision(n=>n+1)}>{t("Retry")}</Button></Card>}
     {!data && !error && <OverviewSkeleton/>}
     {data && view==='month' && <div className="calendar-month">
-      {dates.slice(0,7).map(day=><strong key={day} className="calendar-weekday">{displayDate(day,user,{weekday:'short'})}</strong>)}
-      {dates.map(day=>{
+      {t(dates.slice(0,7).map(day=><strong key={day} className="calendar-weekday">{t(displayDate(day,user,{weekday:'short'}))}</strong>))}
+      {t(dates.map(day=>{
         const events=group(data.items,day,user);
         return <div key={day} className={'calendar-cell'+(day===today?' calendar-today':'')+(day.slice(0,7)!==date.slice(0,7)?' calendar-adjacent':'')}>
-          <button type="button" className="calendar-date" aria-label={'Open '+displayDate(day,user)} onClick={()=>go(day,'day')}>{Number(day.slice(8))}</button>
-          {events.slice(0,3).map(event=><EventButton key={event.id} event={event} user={user} select={setSelected}/>)}
-          {events.length>3 && <button type="button" className="calendar-date" onClick={()=>go(day,'day')}>+{events.length-3} more</button>}
+          <button type="button" className="calendar-date" aria-label={t('Open ')+t(displayDate(day,user))} onClick={()=>go(day,'day')}>{t(Number(day.slice(8)))}</button>
+          {t(events.slice(0,3).map(event=><EventButton key={event.id} event={event} user={user} select={setSelected}/>))}
+          {events.length>3 && <button type="button" className="calendar-date" onClick={()=>go(day,'day')}>+{t(events.length-3)}{t(" more")}</button>}
         </div>;
-      })}
+      }))}
     </div>}
-    {data && view==='day' && (data.items.length ? <Card className="calendar-day-list">{group(data.items,date,user).map(event=><EventButton key={event.id} event={event} user={user} select={setSelected}/>)}</Card> :
-      <EmptyState icon={CalendarDays} title="Nothing on this day" description="Change the event filter or choose another date." />)}
+    {data && view==='day' && (data.items.length ? <Card className="calendar-day-list">{t(group(data.items,date,user).map(event=><EventButton key={event.id} event={event} user={user} select={setSelected}/>))}</Card> :
+      <EmptyState icon={CalendarDays} title={t("Nothing on this day")} description={t("Change the event filter or choose another date.")} />)}
     {data && view==='week' && <>
-      <div className="calendar-week-list">{dates.map(day=><Card key={day} className={day===today?'calendar-today':''}><h2>{displayDate(day,user,{weekday:'long',day:'numeric'})}</h2>
-        {group(data.items,day,user).map(event=><EventButton key={event.id} event={event} user={user} select={setSelected}/>)}
-        {!group(data.items,day,user).length && <small>No events</small>}
-      </Card>)}</div>
+      <div className="calendar-week-list">{t(dates.map(day=><Card key={day} className={day===today?'calendar-today':''}><h2>{t(displayDate(day,user,{weekday:'long',day:'numeric'}))}</h2>
+        {t(group(data.items,day,user).map(event=><EventButton key={event.id} event={event} user={user} select={setSelected}/>))}
+        {!group(data.items,day,user).length && <small>{t("No events")}</small>}
+      </Card>))}</div>
       <div className="calendar-time-grid">
-        <div className="calendar-hours"><strong>All day</strong><div className="calendar-clock">{Array.from({length:24},(_,hour)=><small key={hour}>{String(hour).padStart(2,'0')}:00</small>)}</div></div>
-        {dates.map(day=>{
+        <div className="calendar-hours"><strong>{t("All day")}</strong><div className="calendar-clock">{t(Array.from({length:24},(_,hour)=><small key={hour}>{t(String(hour).padStart(2,'0'))}:00</small>))}</div></div>
+        {t(dates.map(day=>{
           const events=group(data.items,day,user);
           return <div key={day} className={'calendar-week-column'+(day===today?' calendar-today':'')}>
-            <h2>{displayDate(day,user,{weekday:'short',day:'numeric'})}</h2>
-            <div className="calendar-all-day">{events.filter(event=>event.date).map(event=><EventButton key={event.id} event={event} user={user} select={setSelected}/>)}</div>
-            <div className="calendar-clock">{timedLayout(events.filter(event=>!event.date),day,user).map(({event,start,end,lane,lanes})=>
-              <EventButton key={event.id} event={event} user={user} select={setSelected} style={{top:start/14.4+'%',height:(end-start)/14.4+'%',left:lane/lanes*100+'%',width:100/lanes+'%'}}/>)}</div>
+            <h2>{t(displayDate(day,user,{weekday:'short',day:'numeric'}))}</h2>
+            <div className="calendar-all-day">{t(events.filter(event=>event.date).map(event=><EventButton key={event.id} event={event} user={user} select={setSelected}/>))}</div>
+            <div className="calendar-clock">{t(timedLayout(events.filter(event=>!event.date),day,user).map(({event,start,end,lane,lanes})=>
+              <EventButton key={event.id} event={event} user={user} select={setSelected} style={{top:start/14.4+'%',height:(end-start)/14.4+'%',left:lane/lanes*100+'%',width:100/lanes+'%'}}/>))}</div>
           </div>;
-        })}
+        }))}
       </div>
     </>}
     {selected && <EventDetails event={selected} user={user} close={()=>setSelected(null)}/>}

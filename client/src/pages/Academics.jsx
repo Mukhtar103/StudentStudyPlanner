@@ -1,3 +1,4 @@
+import { t, useLanguage } from '../services/language';
 import { useEffect, useRef, useState } from 'react';
 import { Archive, BookOpen, CalendarDays, Clock3, GraduationCap, Plus } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
@@ -48,10 +49,12 @@ function localTime(value, locale) {
   return new Intl.DateTimeFormat(locale, { timeStyle: 'short', timeZone: 'UTC' }).format(new Date('2000-01-01T' + value + ':00Z'));
 }
 function Status({ value }) {
-  return <span className={'academic-status ' + value}>{value}</span>;
+  useLanguage();
+  return <span className={'academic-status ' + value}>{t(value)}</span>;
 }
 
 function Editor({ edit, terms, onClose, onSave }) {
+  useLanguage();
   const dialog = useRef(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
@@ -60,8 +63,8 @@ function Editor({ edit, terms, onClose, onSave }) {
     event.preventDefault();
     if (!pending) onClose();
   }}>
-    <h2 id="editor-title">{edit.title}</h2>
-    {edit.description && <p>{edit.description}</p>}
+    <h2 id="editor-title">{t(edit.title)}</h2>
+    {edit.description && <p>{t(edit.description)}</p>}
     <form aria-busy={pending} onSubmit={async event => {
       event.preventDefault();
       if (pending) return;
@@ -77,24 +80,25 @@ function Editor({ edit, terms, onClose, onSave }) {
         setPending(false);
       }
     }}>
-      {edit.fields?.map(([name, label, type = 'text']) => {
+      {t(edit.fields?.map(([name, label, type = 'text']) => {
         const value = edit.values?.[name] ?? (name === 'color' ? '#7253ce' : '');
         if (type === 'terms' || type === 'days') {
           const options = type === 'terms' ? terms.map(term => [term.id, term.name]) : days.map((day, index) => [index + 1, day]);
-          return <div className="field" key={name}><label htmlFor={name}>{label}</label><select id={name} name={name} defaultValue={value} required>
-            <option value="">Select {label.toLowerCase()}</option>{options.map(([id, text]) => <option key={id} value={id}>{text}</option>)}
+          return <div className="field" key={name}><label htmlFor={name}>{t(label)}</label><select id={name} name={name} defaultValue={value} required>
+            <option value="">{t("Select ")}{t(label.toLowerCase())}</option>{t(options.map(([id, text]) => <option key={id} value={id}>{t(text)}</option>))}
           </select></div>;
         }
-        if (type === 'textarea') return <div className="field" key={name}><label htmlFor={name}>{label}</label><textarea id={name} name={name} defaultValue={value} maxLength={limits[name]} rows={3} /></div>;
-        return <Input key={name} name={name} label={label} type={type} defaultValue={value} required={!optional.includes(name)} maxLength={limits[name]} />;
-      })}
-      {error && <Alert error>{error}</Alert>}
-      <div className="editor-actions"><Button variant="secondary" onClick={onClose} disabled={pending}>Cancel</Button><Button type="submit" disabled={pending}>{pending ? 'Saving…' : edit.action || 'Save changes'}</Button></div>
+        if (type === 'textarea') return <div className="field" key={name}><label htmlFor={name}>{t(label)}</label><textarea id={name} name={name} defaultValue={value} maxLength={limits[name]} rows={3} /></div>;
+        return <Input key={name} name={name} label={t(label)} type={type} defaultValue={value} required={!optional.includes(name)} maxLength={limits[name]} />;
+      }))}
+      {error && <Alert error>{t(error)}</Alert>}
+      <div className="editor-actions"><Button variant="secondary" onClick={onClose} disabled={pending}>{t("Cancel")}</Button><Button type="submit" disabled={pending}>{pending ? t('Saving…') : edit.action || t('Save changes')}</Button></div>
     </form>
   </dialog>;
 }
 
 export default function Academics({ view }) {
+  useLanguage();
   const { user } = useSession();
   const { id } = useParams();
   const [params, setParams] = useSearchParams();
@@ -143,78 +147,78 @@ export default function Academics({ view }) {
   }
 
   return <>
-    <PageHeader title={isWeek ? 'Weekly timetable' : id ? item?.name || item?.title || (isTerm ? 'Term details' : 'Course details') : isTerm ? 'Academic terms' : 'Courses'}
-      description={isWeek ? 'Recurring class meetings in ' + user.timezone + '.' : isTerm ? 'Organize courses around your academic terms.' : 'Manage your classes and their weekly meetings.'}>
-      {isWeek ? <Button to="/courses" variant="secondary"><BookOpen size={17} /> Manage courses</Button> : id ?
-        <Button to={resource} variant="secondary">Back to {isTerm ? 'terms' : 'courses'}</Button> :
-        <Button disabled={!isTerm && !terms.length} onClick={() => open('Create ' + label, resource, entityFields, { termId: term }, 'Create ' + label)}><Plus size={17} /> New {label}</Button>}
+    <PageHeader title={isWeek ? t('Weekly timetable') : id ? item?.name || item?.title || (isTerm ? t('Term details') : t('Course details')) : isTerm ? t('Academic terms') : t('Courses')}
+      description={isWeek ? t('Recurring class meetings in ') + t(user.timezone) + t('.') : isTerm ? t('Organize courses around your academic terms.') : t('Manage your classes and their weekly meetings.')}>
+      {isWeek ? <Button to="/courses" variant="secondary"><BookOpen size={17} />{t(" Manage courses")}</Button> : id ?
+        <Button to={resource} variant="secondary">{t("Back to ")}{isTerm ? t('terms') : t('courses')}</Button> :
+        <Button disabled={!isTerm && !terms.length} onClick={() => open('Create ' + label, resource, entityFields, { termId: term }, 'Create ' + label)}><Plus size={17} />{t('New ' + label)}</Button>}
     </PageHeader>
-    {!isWeek && <nav className="academic-tabs" aria-label="Academics">
-      <Link to="/terms" aria-current={isTerm ? 'page' : undefined}>Academic terms</Link>
-      <Link to="/courses" aria-current={view === 'courses' ? 'page' : undefined}>Courses</Link>
-      <Link to="/timetable">Weekly timetable</Link>
+    {!isWeek && <nav className="academic-tabs" aria-label={t("Academics")}>
+      <Link to="/terms" aria-current={isTerm ? 'page' : undefined}>{t("Academic terms")}</Link>
+      <Link to="/courses" aria-current={view === 'courses' ? 'page' : undefined}>{t("Courses")}</Link>
+      <Link to="/timetable">{t("Weekly timetable")}</Link>
     </nav>}
-    {notice && <div className="dashboard-notice"><Alert>{notice}</Alert></div>}
+    {notice && <div className="dashboard-notice"><Alert>{t(notice)}</Alert></div>}
     {!id && !isWeek && <div className="academic-filters">
-      {!isTerm && <div className="field"><label htmlFor="course-search">Search courses</label><input id="course-search" type="search" placeholder="Title or code" maxLength={150} value={searchDraft} onChange={event => setSearchDraft(event.target.value)} /></div>}
-      {!isTerm && <div className="field"><label htmlFor="term-filter">Academic term</label><select id="term-filter" value={term} onChange={event => filter('termId', event.target.value)}>
-        <option value="">All terms</option>{term && !terms.some(termOption => String(termOption.id) === term) && <option value={term}>Selected term</option>}{terms.map(option => <option key={option.id} value={option.id}>{option.name}</option>)}
+      {!isTerm && <div className="field"><label htmlFor="course-search">{t("Search courses")}</label><input id="course-search" type="search" placeholder={t("Title or code")} maxLength={150} value={searchDraft} onChange={event => setSearchDraft(event.target.value)} /></div>}
+      {!isTerm && <div className="field"><label htmlFor="term-filter">{t("Academic term")}</label><select id="term-filter" value={term} onChange={event => filter('termId', event.target.value)}>
+        <option value="">{t("All terms")}</option>{term && !terms.some(termOption => String(termOption.id) === term) && <option value={term}>{t("Selected term")}</option>}{t(terms.map(option => <option key={option.id} value={option.id}>{option.name}</option>))}
       </select></div>}
-      <div className="field"><label htmlFor="status-filter">Status</label><select id="status-filter" value={status} onChange={event => filter('status', event.target.value)}>
-        {(isTerm ? [['current', 'Current terms'], ['active', 'Active'], ['upcoming', 'Upcoming'], ['completed', 'Completed']] : [['active', 'Active']]).concat([['archived', 'Archived'], ['all', 'All statuses']]).map(([value, text]) => <option key={value} value={value}>{text}</option>)}
+      <div className="field"><label htmlFor="status-filter">{t("Status")}</label><select id="status-filter" value={status} onChange={event => filter('status', event.target.value)}>
+        {t((isTerm ? [['current', 'Current terms'], ['active', 'Active'], ['upcoming', 'Upcoming'], ['completed', 'Completed']] : [['active', 'Active']]).concat([['archived', 'Archived'], ['all', 'All statuses']]).map(([value, text]) => <option key={value} value={value}>{t(text)}</option>))}
       </select></div>
     </div>}
-    {(main.error || termData.error || meetingData.error) && <Card><Alert error>{(main.error || termData.error || meetingData.error).message}</Alert><Button className="retry-session" onClick={refresh}>Retry</Button></Card>}
-    {!item && !main.error && <Card><LoadingState label="Loading academic records" /></Card>}
+    {(main.error || termData.error || meetingData.error) && <Card><Alert error>{t((main.error || termData.error || meetingData.error).message)}</Alert><Button className="retry-session" onClick={refresh}>{t("Retry")}</Button></Card>}
+    {!item && !main.error && <Card><LoadingState label={t("Loading academic records")} /></Card>}
     {item && isWeek && (item.items.length ? <div className="week-grid">
-      {days.map((day, index) => <Card className="week-day" key={day}><h2>{day}</h2>
-        {item.items.filter(meeting => meeting.weekday === index + 1).map(meeting => <Link className="week-meeting" style={{ '--course-color': meeting.color || '#7253ce' }} to={'/courses/' + meeting.courseId} key={meeting.id}>
-          <strong>{meeting.title}</strong><span>{localTime(meeting.startTime, user.locale)}–{localTime(meeting.endTime, user.locale)}</span>
-          {(meeting.location || meeting.courseLocation) && <small>{meeting.location || meeting.courseLocation}</small>}
-        </Link>)}
-        {!item.items.some(meeting => meeting.weekday === index + 1) && <small>No classes</small>}
-      </Card>)}
-    </div> : <EmptyState icon={CalendarDays} title="No weekly meetings yet" description="Open a course to add recurring meeting times."><Button to="/courses">Browse courses</Button></EmptyState>)}
+      {t(days.map((day, index) => <Card className="week-day" key={day}><h2>{t(day)}</h2>
+        {t(item.items.filter(meeting => meeting.weekday === index + 1).map(meeting => <Link className="week-meeting" style={{ '--course-color': meeting.color || '#7253ce' }} to={'/courses/' + meeting.courseId} key={meeting.id}>
+          <strong>{meeting.title}</strong><span>{t(localTime(meeting.startTime, user.locale))}–{t(localTime(meeting.endTime, user.locale))}</span>
+          {(meeting.location || meeting.courseLocation) && <small>{meeting.location || t(meeting.courseLocation)}</small>}
+        </Link>))}
+        {!item.items.some(meeting => meeting.weekday === index + 1) && <small>{t("No classes")}</small>}
+      </Card>))}
+    </div> : <EmptyState icon={CalendarDays} title={t("No weekly meetings yet")} description={t("Open a course to add recurring meeting times.")}><Button to="/courses">{t("Browse courses")}</Button></EmptyState>)}
     {item && !id && !isWeek && <>
-      {item.items.length ? <div className="academic-grid">{item.items.map(record => <Card className={isTerm ? 'academic-card' : 'academic-card course-card'} key={record.id}>
+      {item.items.length ? <div className="academic-grid">{t(item.items.map(record => <Card className={isTerm ? 'academic-card' : 'academic-card course-card'} key={record.id}>
         <div className="academic-card-top"><span className="tile" style={record.color ? { borderLeft: '4px solid ' + record.color } : undefined}>{isTerm ? <GraduationCap size={20} /> : <BookOpen size={20} />}</span><Status value={record.status} /></div>
         <h2><Link to={resource + '/' + record.id}>{record.name || record.title}</Link></h2>
-        <p>{isTerm ? localDate(record.startDate, user.locale) + ' – ' + localDate(record.endDate, user.locale) : record.code + ' · ' + record.termName}</p>
-        {isTerm ? <small>{record.courseCount} {record.courseCount === 1 ? 'course' : 'courses'}</small> : <small>{[record.instructor, record.location].filter(Boolean).join(' · ')}</small>}
-      </Card>)}</div> : <EmptyState icon={isTerm ? GraduationCap : BookOpen} title={'No ' + (isTerm ? 'terms' : 'courses') + ' found'}
-        description={!isTerm && termData.data && !terms.length ? 'Create an academic term before adding a course.' : 'Try different filters or add a new record.'}>
-        {!isTerm && termData.data && !terms.length && <Button to="/terms">Go to academic terms</Button>}
+        <p>{isTerm ? t(localDate(record.startDate, user.locale)) + t(' – ') + t(localDate(record.endDate, user.locale)) : record.code + t(' · ') + record.termName}</p>
+        {isTerm ? <small>{t(record.courseCount)} {record.courseCount === 1 ? t('course') : t('courses')}</small> : <small>{t([record.instructor, record.location].filter(Boolean).join(' · '))}</small>}
+      </Card>))}</div> : <EmptyState icon={isTerm ? GraduationCap : BookOpen} title={t(isTerm ? 'No terms found' : 'No courses found')}
+        description={!isTerm && termData.data && !terms.length ? t('Create an academic term before adding a course.') : t('Try different filters or add a new record.')}>
+        {!isTerm && termData.data && !terms.length && <Button to="/terms">{t("Go to academic terms")}</Button>}
       </EmptyState>}
-      {item.total > item.limit && <div className="academic-pagination"><Button variant="secondary" disabled={page <= 1} onClick={() => filter('page', page - 1)}>Previous</Button>
-        <span>Page {page} of {Math.ceil(item.total / item.limit)}</span><Button variant="secondary" disabled={page * item.limit >= item.total} onClick={() => filter('page', page + 1)}>Next</Button>
+      {item.total > item.limit && <div className="academic-pagination"><Button variant="secondary" disabled={page <= 1} onClick={() => filter('page', page - 1)}>{t("Previous")}</Button>
+        <span>{t("Page ")}{t(page)}{t(" of ")}{t(Math.ceil(item.total / item.limit))}</span><Button variant="secondary" disabled={page * item.limit >= item.total} onClick={() => filter('page', page + 1)}>{t("Next")}</Button>
       </div>}
     </>}
     {item && id && <>
       <Card className="academic-detail">
         <Status value={item.status} />
-        {isTerm ? <><p>{localDate(item.startDate, user.locale)} – {localDate(item.endDate, user.locale)}</p><Button to={'/courses?termId=' + id + '&status=all'} variant="secondary">View courses ({item.courseCount})</Button></> :
-          <><p>{item.code} · <Link to={'/terms/' + item.termId}>{item.termName}</Link></p>{item.instructor && <p>Instructor · {item.instructor}</p>}{item.location && <p>Location · {item.location}</p>}{item.description && <p>{item.description}</p>}</>}
+        {isTerm ? <><p>{t(localDate(item.startDate, user.locale))} – {t(localDate(item.endDate, user.locale))}</p><Button to={'/courses?termId=' + id + '&status=all'} variant="secondary">{t("View courses (")}{t(item.courseCount)})</Button></> :
+          <><p>{item.code} · <Link to={'/terms/' + item.termId}>{item.termName}</Link></p>{item.instructor && <p>{t("Instructor · ")}{item.instructor}</p>}{item.location && <p>{t("Location · ")}{item.location}</p>}{item.description && <p>{item.description}</p>}</>}
         {!archived && <div className="editor-actions">
-          <Button variant="secondary" onClick={() => open('Edit ' + label, path, entityFields, item, 'Save changes', 'PATCH')} disabled={!isTerm && !terms.length}>Edit {label}</Button>
-          <Button variant="secondary" onClick={archive}><Archive size={16} /> Archive {label}</Button>
+          <Button variant="secondary" onClick={() => open('Edit ' + label, path, entityFields, item, 'Save changes', 'PATCH')} disabled={!isTerm && !terms.length}>{t('Edit ' + label)}</Button>
+          <Button variant="secondary" onClick={archive}><Archive size={16} />{t('Archive ' + label)}</Button>
         </div>}
       </Card>
       {meetingPath && <Card className="academic-detail">
-        <div className="academic-card-top"><h2>Weekly meeting times</h2>{!archived && courseEditable && <Button onClick={() => open('Add meeting time', meetingPath, meetingFields, null, 'Add meeting')}><Plus size={16} /> Add meeting</Button>}</div>
-        <p>Local class times in {user.timezone}</p>
-        {!meetingData.data && !meetingData.error && <LoadingState label="Loading meetings" />}
-        {meetingData.data?.length === 0 && <p>No meetings yet. Add a weekday and time to begin.</p>}
-        {meetingData.data?.map(meeting => <div className="academic-meeting" key={meeting.id}><Clock3 size={18} /><div><strong>{days[meeting.weekday - 1]}</strong>
-          <p>{localTime(meeting.startTime, user.locale)}–{localTime(meeting.endTime, user.locale)}{meeting.location ? ' · ' + meeting.location : ''}</p></div>
+        <div className="academic-card-top"><h2>{t("Weekly meeting times")}</h2>{!archived && courseEditable && <Button onClick={() => open('Add meeting time', meetingPath, meetingFields, null, 'Add meeting')}><Plus size={16} />{t(" Add meeting")}</Button>}</div>
+        <p>{t("Local class times in ")}{t(user.timezone)}</p>
+        {!meetingData.data && !meetingData.error && <LoadingState label={t("Loading meetings")} />}
+        {meetingData.data?.length === 0 && <p>{t("No meetings yet. Add a weekday and time to begin.")}</p>}
+        {t(meetingData.data?.map(meeting => <div className="academic-meeting" key={meeting.id}><Clock3 size={18} /><div><strong>{t(days[meeting.weekday - 1])}</strong>
+          <p>{t(localTime(meeting.startTime, user.locale))}–{t(localTime(meeting.endTime, user.locale))}{meeting.location ? t(' · ') + meeting.location : t('')}</p></div>
           {!archived && courseEditable && <div className="editor-actions">
-            <Button variant="secondary" onClick={() => open('Edit meeting time', meetingPath + '/' + meeting.id, meetingFields, meeting, 'Save changes', 'PATCH')}>Edit</Button>
-            <Button variant="secondary" onClick={() => open('Delete meeting time?', meetingPath + '/' + meeting.id, null, null, 'Delete meeting', 'DELETE', 'This removes the recurring meeting from your timetable.')}>Delete</Button>
+            <Button variant="secondary" onClick={() => open('Edit meeting time', meetingPath + '/' + meeting.id, meetingFields, meeting, 'Save changes', 'PATCH')}>{t("Edit")}</Button>
+            <Button variant="secondary" onClick={() => open('Delete meeting time?', meetingPath + '/' + meeting.id, null, null, 'Delete meeting', 'DELETE', 'This removes the recurring meeting from your timetable.')}>{t("Delete")}</Button>
           </div>}
-        </div>)}
+        </div>))}
       </Card>}
     </>}
-    {edit && !isTerm && !termData.data && !termData.error && <Card><LoadingState label="Loading academic terms" /></Card>}
-    {edit && !isTerm && termData.data && !terms.length && <EmptyState icon={GraduationCap} title="Create an academic term first" description="Each course belongs to a term."><Button to="/terms">Go to academic terms</Button></EmptyState>}
+    {edit && !isTerm && !termData.data && !termData.error && <Card><LoadingState label={t("Loading academic terms")} /></Card>}
+    {edit && !isTerm && termData.data && !terms.length && <EmptyState icon={GraduationCap} title={t("Create an academic term first")} description={t("Each course belongs to a term.")}><Button to="/terms">{t("Go to academic terms")}</Button></EmptyState>}
     {edit && (isTerm || terms.length > 0) && <Editor edit={edit} terms={terms} onClose={() => setEdit(null)} onSave={async (edit, data) => {
       await api(edit.path, { method: edit.method, data });
       setNotice(edit.method === 'DELETE' ? (edit.fields || edit.path.includes('/schedules/') ? 'Meeting deleted.' : 'Record archived.') : 'Changes saved.');

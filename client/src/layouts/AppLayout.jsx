@@ -1,3 +1,5 @@
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { t, useLanguage } from '../services/language';
 import { NotificationBell } from '../pages/Notifications';
 import { Alert } from '../components/ui';
 import { api } from '../services/api';
@@ -20,31 +22,35 @@ export const pages = [
 ];
 
 export function Brand() {
-  return <Link to="/" className="brand"><span className="brand-mark"><GraduationCap size={23} /></span><span>Study Planner</span></Link>;
+  useLanguage();
+  return <Link to="/" className="brand"><span className="brand-mark"><GraduationCap size={23} /></span><span>{t("Study Planner")}</span></Link>;
 }
 
 export function Sidebar({ open, onNavigate, preview }) {
+  useLanguage();
   return <aside className={'sidebar ' + (open ? 'open' : '')} id="sidebar">
     <Brand />
-    <nav aria-label="Workspace" className="side-links">
-      {pages.filter(page => !preview || !['terms', 'timetable'].includes(page.path)).map(({ path, label, icon: Icon }) => <NavLink key={path} to={preview ? '/preview' + (path === 'dashboard' ? '' : '/' + path) : '/' + path} end={path === 'dashboard'} onClick={onNavigate}><Icon size={18} />{label}</NavLink>)}
+    <nav aria-label={t("Workspace")} className="side-links">
+      {t(pages.filter(page => !preview || !['terms', 'timetable'].includes(page.path)).map(({ path, label, icon: Icon }) => <NavLink key={path} to={preview ? '/preview' + (path === 'dashboard' ? '' : '/' + path) : '/' + path} end={path === 'dashboard'} onClick={onNavigate}><Icon size={18} />{t(label)}</NavLink>))}
     </nav>
-    {preview ? <Link className="exit-preview" to="/login">Sign in <ArrowUpRight size={16} /></Link> : <SignOut />}
+    {preview ? <Link className="exit-preview" to="/login">{t("Sign in ")}<ArrowUpRight size={16} /></Link> : <SignOut />}
   </aside>;
 }
 
 export function Header({ title, open, onToggle, preview }) {
+  useLanguage();
   const { user } = useSession();
   return <header className="topbar">
     <div className="top-left">
-      <button type="button" className="icon-button menu" aria-label={open ? 'Close navigation' : 'Open navigation'} aria-controls="sidebar" aria-expanded={open} onClick={onToggle}>{open ? <X size={21} /> : <Menu size={21} />}</button>
-      <span className="crumb">Workspace</span><span className="crumb">/</span><strong>{title}</strong>
+      <button type="button" className="icon-button menu" aria-label={open ? t('Close navigation') : t('Open navigation')} aria-controls="sidebar" aria-expanded={open} onClick={onToggle}>{open ? <X size={21} /> : <Menu size={21} />}</button>
+      <span className="crumb">{t("Workspace")}</span><span className="crumb">/</span><strong>{t(title)}</strong>
     </div>
-    <div className="top-right">{preview ? <span className="badge">Sample workspace</span> : <Link className="account-name" to="/profile" title={user.displayName}>{user.displayName}</Link>}{preview ? <Link className="icon-button" aria-label="Notifications" to="/preview/notifications"><Bell size={19} /></Link> : <NotificationBell />}{!preview && <Link className="avatar" to="/profile" aria-label="Profile">{initials(user.displayName)}</Link>}</div>
+    <div className="top-right"><LanguageSwitcher />{preview ? <span className="badge">{t("Sample workspace")}</span> : <Link className="account-name" to="/profile" title={user.displayName}>{user.displayName}</Link>}{preview ? <Link className="icon-button" aria-label={t("Notifications")} to="/preview/notifications"><Bell size={19} /></Link> : <NotificationBell />}{!preview && <Link className="avatar" to="/profile" aria-label={t("Profile")}>{t(initials(user.displayName))}</Link>}</div>
   </header>;
 }
 
 export default function AppLayout({ preview = false }) {
+  useLanguage();
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
   const title = pathname === '/profile' ? 'Profile' : pages.find(page => (preview ? '/preview' + (page.path === 'dashboard' ? '' : '/' + page.path) : '/' + page.path) === pathname)?.label ?? 'Workspace';
@@ -54,12 +60,12 @@ export default function AppLayout({ preview = false }) {
       document.querySelector('.menu')?.focus();
     }
   }}>
-    <a className="skip" href="#workspace-main">Skip to content</a>
+    <a className="skip" href="#workspace-main">{t("Skip to content")}</a>
     <Sidebar preview={preview} open={open} onNavigate={() => {
       if (open) document.getElementById('workspace-main')?.focus();
       setOpen(false);
     }} />
-    <div className="workspace-body"><Header preview={preview} title={title} open={open} onToggle={() => { setOpen(!open); if (!open) requestAnimationFrame(() => document.querySelector('#sidebar nav a.active, #sidebar nav a')?.focus()); }} />
+    <div className="workspace-body"><Header preview={preview} title={t(title)} open={open} onToggle={() => { setOpen(!open); if (!open) requestAnimationFrame(() => document.querySelector('#sidebar nav a.active, #sidebar nav a')?.focus()); }} />
       <main id="workspace-main" className="workspace-main" tabIndex={-1}><Outlet context={{ preview }} /></main>
     </div>
   </div>;
@@ -67,12 +73,13 @@ export default function AppLayout({ preview = false }) {
 
 
 function SignOut() {
+  useLanguage();
   const { setUser } = useSession();
   const navigate = useNavigate();
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
   return <div className="sidebar-footer">
-    {error && <Alert error>Sign-out failed. Try again.</Alert>}
+    {error && <Alert error>{t("Sign-out failed. Try again.")}</Alert>}
     <button className="exit-preview" type="button" disabled={pending} onClick={async () => {
       setPending(true);
       setError(false);
@@ -85,7 +92,7 @@ function SignOut() {
       } finally {
         setPending(false);
       }
-    }}>{pending ? 'Signing out…' : 'Sign out'} <LogOut size={16} /></button>
+    }}>{pending ? t('Signing out…') : t('Sign out')} <LogOut size={16} /></button>
   </div>;
 }
 
