@@ -23,13 +23,17 @@ function subscribe(listener) { listeners.add(listener); return () => listeners.d
 export function useLanguage() {
   return useSyncExternalStore(subscribe, () => language);
 }
+export const dariDigits = value => String(value).replace(/[0-9٠-٩]/g,
+  digit => '۰۱۲۳۴۵۶۷۸۹'['٠١٢٣٤٥٦٧٨٩'.includes(digit) ? '٠١٢٣٤٥٦٧٨٩'.indexOf(digit) : Number(digit)]);
 export function translate(value, locale = language) {
-  if (locale !== 'fa-AF' || typeof value !== 'string') return value;
-  if (Object.hasOwn(dari, value)) return dari[value];
+  if (locale !== 'fa-AF') return value;
+  if (typeof value === 'number') return dariDigits(value);
+  if (typeof value !== 'string') return value;
+  if (Object.hasOwn(dari, value)) return dariDigits(dari[value]);
   const trimmed = value.trim();
-  if (Object.hasOwn(dari, trimmed)) return value.replace(trimmed, dari[trimmed]);
+  if (Object.hasOwn(dari, trimmed)) return dariDigits(value.replace(trimmed, dari[trimmed]));
   const metric = trimmed.match(/^([\d۰-۹.,٬٫]+) (min|h|overdue|days with recorded study|open sessions|cancelled)$/);
-  if (metric) return value.replace(trimmed, metric[1] + ' ' + (dari[metric[2]] || metric[2]));
-  return value;
+  if (metric) return dariDigits(value.replace(trimmed, metric[1] + ' ' + (dari[metric[2]] || metric[2])));
+  return dariDigits(value);
 }
 export const t = translate;

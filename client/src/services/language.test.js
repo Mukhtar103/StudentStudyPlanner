@@ -24,9 +24,13 @@ test('Translation preserves whitespace, unknown user text and non-text values', 
   assert.equal(translate('My own course title'), 'My own course title');
   const content = { type: 'span' };
   assert.equal(translate(content), content);
-  assert.equal(translate(42), 42);
+  assert.equal(translate(42), '۴۲');
   assert.equal(translate('Courses', 'en'), 'Courses');
-  assert.equal(translate('45 min'), '45 دقیقه');
+  assert.equal(translate('45 min'), '۴۵ دقیقه');
+  assert.equal(translate('0123456789'), '۰۱۲۳۴۵۶۷۸۹');
+  assert.equal(translate('٠١٢٣٤٥٦٧٨٩'), '۰۱۲۳۴۵۶۷۸۹');
+  assert.equal(translate('Page 12', 'en'), 'Page 12');
+  assert.equal(translate(42, 'en'), 42);
 });
 test('English switching persists without changing stored API identifiers', () => {
   setLanguage('en');

@@ -28,7 +28,7 @@ function Trend({rows,metrics,user,month=false}) {
     </div>
     {rows.length>size&&<div className="editor-actions">
       <Button variant="secondary" disabled={!start} onClick={()=>setPage(start-1)}>{t("Earlier")}</Button>
-      <small>{t("Group ")}{t(start)+t(1)}{t(" of ")}{t(Math.ceil(rows.length/size))}</small>
+      <small>{t("Group ")}{t(start + 1)}{t(" of ")}{t(Math.ceil(rows.length/size))}</small>
       <Button variant="secondary" disabled={(start+1)*size>=rows.length} onClick={()=>setPage(start+1)}>{t("Later")}</Button>
     </div>}
   </>;

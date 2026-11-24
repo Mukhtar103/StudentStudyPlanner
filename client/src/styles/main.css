@@ -1,4 +1,11 @@
 
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 :root {
   font-family: 'Inter Variable', Inter, sans-serif;
   color: #202032;
@@ -14,7 +21,11 @@
   --radius: 16px;
   --shadow: 0 3px 12px #24213c06;
 }
-[lang="fa-AF"] { font-family: Tahoma, 'Segoe UI', Arial, sans-serif; }
+[lang="fa-AF"], [lang="fa-AF"] input, [lang="fa-AF"] select,
+[lang="fa-AF"] textarea, [lang="fa-AF"] button {
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+  font-feature-settings: 'ss01' 1;
+}
 [lang="fa-AF"] h1, [lang="fa-AF"] h2, [lang="fa-AF"] .hero h1,
 [lang="fa-AF"] .brand { letter-spacing: normal; line-height: 1.55; }
 .language-control { display: grid; gap: 4px; min-width: 0; }
