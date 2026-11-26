@@ -6,6 +6,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Compass } from 'lucide-react';
 import '@fontsource-variable/inter';
 import './styles/main.css';
+import './styles/redesign.css';
 import AppLayout, { pages } from './layouts/AppLayout';
 import Dashboard from './pages/Dashboard';
 import Module from './pages/Module';
